@@ -1,0 +1,37 @@
+{
+  "enable": {
+    "type": "bool",
+    "default": true,
+    "description": "总开关"
+  },
+  "notify_on_boot": {
+    "type": "bool",
+    "default": false,
+    "description": "启动时直接主动发送（部分发不出去）"
+  },
+  "notify_on_first_message": {
+    "type": "bool",
+    "default": true,
+    "description": "目标会话出现新消息时补发 与notify_on_boot同时开不生效"
+  },
+  "notify_on_shutdown": {
+    "type": "bool",
+    "default": true,
+    "description": "插件停用/卸载发送关闭消息（依赖 terminate 生命周期钩子）"
+  },
+  "sessions": {
+    "type": "list",
+    "default": [],
+    "description": "UMO,留空不发送通知并记ERROR"
+  },
+  "startup_msg": {
+    "type": "string",
+    "default": "✅ AstrBot 已启动",
+    "description": "启动消息内容"
+  },
+  "shutdown_msg": {
+    "type": "string",
+    "default": "🛑 AstrBot 正在关闭",
+    "description": "关闭消息内容"
+  }
+}
