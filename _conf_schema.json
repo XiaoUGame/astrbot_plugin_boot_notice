@@ -1,9 +1,4 @@
 {
-  "enable": {
-    "type": "bool",
-    "default": true,
-    "description": "总开关"
-  },
   "notify_on_boot": {
     "type": "bool",
     "default": false,
