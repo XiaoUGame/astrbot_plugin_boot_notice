@@ -1,11 +1,13 @@
 import asyncio
+import signal
+import threading
 
 from astrbot.api import logger
 from astrbot.api.event import AstrMessageEvent, MessageChain, filter
 from astrbot.api.star import Context, Star, register
 
 
-@register("astrbot_plugin_boot_notice", "Deepseek,XiaoU", "启动/关闭通知", "1.2.1")
+@register("astrbot_plugin_boot_notice", "Deepseek,XiaoU", "启动/关闭通知", "1.2.3")
 class BootNotice(Star):
     def __init__(self, context: Context, config: dict | None = None):
         super().__init__(context)
@@ -29,8 +31,9 @@ class BootNotice(Star):
 
         self._pending = False
         self._lock = asyncio.Lock()
+        self._signal_installed = False
+        self._shutdown_sent = False
 
-        # 显式处理 notify_on_boot / notify_on_first_message 的互斥
         if self.notify_on_boot and self.notify_on_first_message:
             logger.warning(
                 "[boot_notice] notify_on_boot 与 notify_on_first_message 同时为 true，"
@@ -58,22 +61,70 @@ class BootNotice(Star):
             self._pending = True
             logger.info("[boot_notice] 已进入待补发状态，等待任意目标会话出现新消息")
 
+        if self.notify_on_shutdown:
+            self._install_signal_handlers()
+
     @filter.event_message_type(filter.EventMessageType.ALL)
     async def on_any_message(self, event: AstrMessageEvent):
         if event.unified_msg_origin not in self.sessions:
             return
-        # 用锁保护 _pending 的读取与清除，避免并发消息导致重复补发
         async with self._lock:
             if not self._pending:
                 return
             self._pending = False
         await self._send(self.startup_msg)
 
+    def _install_signal_handlers(self):
+        if self._signal_installed:
+            return
+        try:
+            loop = asyncio.get_running_loop()
+        except RuntimeError:
+            logger.warning("[boot_notice] 无法获取事件循环，跳过信号监听")
+            return
+
+        for sig in (signal.SIGTERM, signal.SIGINT):
+            try:
+                old_handler = signal.getsignal(sig)
+                signal.signal(sig, self._make_signal_handler(old_handler, loop))
+            except Exception as e:
+                logger.warning(f"[boot_notice] 安装信号 {sig} 失败: {e}")
+                continue
+        self._signal_installed = True
+        logger.info("[boot_notice] 已挂载进程退出信号监听 (SIGTERM/SIGINT)")
+
+    def _make_signal_handler(self, old_handler, loop):
+        def handler(signum, frame):
+            # 1. 将发送任务投递到事件循环
+            if not self._shutdown_sent:
+                self._shutdown_sent = True
+                try:
+                    loop.call_soon_threadsafe(
+                        lambda: asyncio.ensure_future(self._send(self.shutdown_msg))
+                    )
+                except Exception as e:
+                    logger.error(f"[boot_notice] 信号触发发送失败: {e}")
+
+            # 2. 延迟 2 秒放行框架原有的关闭逻辑，给网络请求留出存活时间
+            def chain():
+                try:
+                    if callable(old_handler):
+                        old_handler(signum, frame)
+                    else:
+                        signal.default_int_handler(signum, frame)
+                except Exception:
+                    pass
+
+            threading.Timer(2.0, chain).start()
+
+        return handler
+
     async def terminate(self):
-        """插件被停用/卸载时调用。关闭通知在此触发，不再拦截系统信号。"""
+        """插件被停用/卸载时调用。作为关闭通知的兜底触发点。"""
         if not self.enable:
             return
-        if self.notify_on_shutdown and self.sessions:
+        if self.notify_on_shutdown and self.sessions and not self._shutdown_sent:
+            self._shutdown_sent = True
             try:
                 await asyncio.wait_for(self._send(self.shutdown_msg), timeout=5.0)
             except asyncio.TimeoutError:
