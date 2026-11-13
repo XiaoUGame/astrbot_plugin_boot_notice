@@ -1,5 +1,6 @@
 name: astrbot_plugin_boot_notice
-desc: AstrBot 启动/关闭时自动发送通知，支持开机补发与目标会话配置
+desc: AstrBot 启动/关闭时自动发送通知，支持主动推送重试、首条消息补发与目标会话配置
 author: Deepseek,XiaoU
-version: 1.2.4
+version: 1.3.0
 display_name: 开关机通知
+repo: https://github.com/XiaoUGame/astrbot_plugin_boot_notice

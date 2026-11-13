@@ -2,17 +2,34 @@
   "notify_on_boot": {
     "type": "bool",
     "default": false,
-    "description": "启动时直接主动发送（部分发不出去）"
+    "description": "启动时主动推送（会等待平台就绪并重试）"
   },
   "notify_on_first_message": {
     "type": "bool",
     "default": true,
-    "description": "目标会话出现新消息时补发 与notify_on_boot同时开不生效"
+    "description": "主动推送失败或未开启时，目标会话来消息后补发"
   },
   "notify_on_shutdown": {
     "type": "bool",
     "default": true,
     "description": "插件停用/卸载发送关闭消息（依赖 terminate 生命周期钩子）"
+  },
+  "boot_retry_count": {
+    "type": "int",
+    "default": 3,
+    "description": "主动推送最大尝试次数",
+    "hint": "仅开 notify_on_boot 时全部失败会记录 WARN；与 notify_on_first_message 同开时失败会转为等待补发"
+  },
+  "boot_retry_interval": {
+    "type": "int",
+    "default": 5,
+    "description": "主动推送重试间隔（秒）"
+  },
+  "platform_ready_timeout": {
+    "type": "int",
+    "default": 60,
+    "description": "等待目标平台就绪的最长秒数",
+    "hint": "QQ 官方以 WebSocket 收到 READY 为准；设为 0 表示不等待"
   },
   "sessions": {
     "type": "list",
