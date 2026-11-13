@@ -12,7 +12,7 @@ READY_POLL_INTERVAL_SECONDS = 0.5
 _MISSING = object()
 
 
-@register("astrbot_plugin_boot_notice", "Deepseek,XiaoU", "启动/关闭通知", "1.3.0")
+@register("astrbot_plugin_boot_notice", "Deepseek,XiaoU", "开关机通知", "1.3.0")
 class BootNotice(Star):
     def __init__(self, context: Context, config: dict | None = None):
         super().__init__(context)
