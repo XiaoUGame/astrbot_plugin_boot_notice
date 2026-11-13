@@ -2,17 +2,20 @@
   "notify_on_boot": {
     "type": "bool",
     "default": false,
-    "description": "启动时主动推送（会等待平台就绪并重试）"
+    "description": "启动消息-主动",
+    "hint":"主动发送消息，会等待平台就绪并重试"
   },
   "notify_on_first_message": {
     "type": "bool",
     "default": true,
-    "description": "主动推送失败或未开启时，目标会话来消息后补发"
+    "description": "启动消息-补发",
+    "hint":"会在目标会话来消息后发，主动推送失败或未开启时生效"
   },
   "notify_on_shutdown": {
     "type": "bool",
     "default": true,
-    "description": "插件停用/卸载发送关闭消息（依赖 terminate 生命周期钩子）"
+    "description": "关闭消息",
+    "hint": "这个屑AI代码写的很乱（插件重载也会发一条）"
   },
   "boot_retry_count": {
     "type": "int",
@@ -34,7 +37,8 @@
   "sessions": {
     "type": "list",
     "default": [],
-    "description": "UMO,留空不发送通知并记ERROR"
+    "description": "UMO",
+    "hint":"留空不发送通知并记ERROR"
   },
   "startup_msg": {
     "type": "string",
